@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" role="img" aria-label="Foto temporanea puzzle">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe9d6"/>
+      <stop offset="55%" stop-color="#ffc9db"/>
+      <stop offset="100%" stop-color="#ef9bb7"/>
+    </linearGradient>
+    <linearGradient id="heart" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff7ee"/>
+      <stop offset="100%" stop-color="#ffe3a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+  <g opacity="0.22" fill="#ffffff">
+    <circle cx="145" cy="170" r="92"/>
+    <circle cx="890" cy="220" r="130"/>
+    <circle cx="960" cy="930" r="150"/>
+    <circle cx="240" cy="920" r="120"/>
+  </g>
+  <g transform="translate(540 430)">
+    <path d="M0 170 C-230 15 -340 -125 -340 -260 C-340 -368 -258 -445 -160 -445 C-82 -445 -28 -412 0 -355 C28 -412 82 -445 160 -445 C258 -445 340 -368 340 -260 C340 -125 230 15 0 170Z" fill="url(#heart)"/>
+  </g>
+  <g opacity="0.45" fill="#ffffff">
+    <circle cx="420" cy="360" r="28"/>
+    <circle cx="500" cy="300" r="18"/>
+    <circle cx="640" cy="340" r="22"/>
+  </g>
+</svg>

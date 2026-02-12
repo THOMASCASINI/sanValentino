@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lettera di San Valentino</title>
+  <meta name="description" content="Lettera animata con puzzle 3x3 della vostra foto.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app">
+    <section class="cover" id="coverSection" aria-label="Busta iniziale">
+      <div class="cover-inner">
+        <p class="kicker">San Valentino</p>
+        <h1>Una lettera per te</h1>
+        <p class="subtitle">Apri la busta e ricomponi la nostra foto insieme.</p>
+        <button class="envelope-button" id="openEnvelope" type="button" aria-label="Apri la lettera">
+          <span class="envelope" aria-hidden="true">
+            <span class="env-back"></span>
+            <span class="env-letter"></span>
+            <span class="env-front"></span>
+            <span class="env-flap"></span>
+            <span class="env-seal">LOVE</span>
+          </span>
+          <span class="button-text">Apri</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="letter-section" id="letterSection" aria-hidden="true">
+      <article class="letter-card">
+        <div class="puzzle-panel">
+          <div id="puzzleBoard" class="puzzle-board" role="grid" aria-label="Puzzle 3x3"></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="win-section" id="winSection" aria-hidden="true">
+      <p class="win-text">Buon San Valentino</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
