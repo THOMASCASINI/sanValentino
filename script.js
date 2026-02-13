@@ -1,6 +1,7 @@
-const GRID_SIZE = 3;
-const TILE_COUNT = GRID_SIZE * GRID_SIZE;
-const DEFAULT_IMAGE_URL = "assets/foto-temporanea.svg";
+const GRID_COLUMNS = 4;
+const GRID_ROWS = 3;
+const TILE_COUNT = GRID_COLUMNS * GRID_ROWS;
+const DEFAULT_IMAGE_URL = "assets/touse.jpeg";
 
 const openEnvelopeButton = document.getElementById("openEnvelope");
 const coverSection = document.getElementById("coverSection");
@@ -12,6 +13,7 @@ let currentImageUrl = DEFAULT_IMAGE_URL;
 let order = [];
 let dragStartPosition = null;
 let solved = false;
+let imageAspectRatio = 1;
 
 function solvedOrder() {
   return Array.from({ length: TILE_COUNT }, (_, index) => index);
@@ -37,10 +39,42 @@ function createShuffledOrder() {
 }
 
 function backgroundPositionFor(pieceIndex) {
-  const col = pieceIndex % GRID_SIZE;
-  const row = Math.floor(pieceIndex / GRID_SIZE);
-  const step = 100 / (GRID_SIZE - 1);
-  return `${col * step}% ${row * step}%`;
+  const col = pieceIndex % GRID_COLUMNS;
+  const row = Math.floor(pieceIndex / GRID_COLUMNS);
+  const colStep = GRID_COLUMNS > 1 ? 100 / (GRID_COLUMNS - 1) : 0;
+  const rowStep = GRID_ROWS > 1 ? 100 / (GRID_ROWS - 1) : 0;
+  return `${col * colStep}% ${row * rowStep}%`;
+}
+
+function applyBoardGeometry() {
+  const tileRatio = (imageAspectRatio * GRID_ROWS) / GRID_COLUMNS;
+  puzzleBoard.style.setProperty("--grid-columns", String(GRID_COLUMNS));
+  puzzleBoard.style.setProperty("--grid-rows", String(GRID_ROWS));
+  puzzleBoard.style.setProperty("--tile-ratio", String(tileRatio > 0 ? tileRatio : 1));
+  puzzleBoard.setAttribute("aria-label", `Puzzle ${GRID_COLUMNS}x${GRID_ROWS}`);
+}
+
+function loadImageAspectRatio(imageUrl) {
+  return new Promise((resolve) => {
+    const image = new Image();
+
+    image.addEventListener("load", () => {
+      if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+        resolve(image.naturalWidth / image.naturalHeight);
+        return;
+      }
+      resolve(1);
+    });
+
+    image.addEventListener("error", () => resolve(1));
+    image.src = imageUrl;
+  });
+}
+
+async function initializeBoardVisuals() {
+  imageAspectRatio = await loadImageAspectRatio(currentImageUrl);
+  applyBoardGeometry();
+  renderBoard();
 }
 
 function renderBoard() {
@@ -70,36 +104,12 @@ function renderBoard() {
 }
 
 function evaluateBoard() {
-  console.log("Ordine attuale:", order);
-
-  const wrongPositions = order
-    .map((pieceIndex, positionIndex) => {
-      if (pieceIndex !== positionIndex) {
-        return {
-          posizione: positionIndex,
-          pezzoAttuale: pieceIndex,
-          pezzoCorretto: positionIndex
-        };
-      }
-      return null;
-    })
-    .filter(Boolean);
-
-  if (wrongPositions.length > 0) {
-    console.log("❌ Posizioni sbagliate:", wrongPositions);
-  } else {
-    console.log("✅ Puzzle risolto correttamente");
-  }
-
   solved = isSolved(order);
-  console.log("isSolved:", solved);
 
   if (solved) {
-    console.log("🎉 ENTRA NEL BLOCCO VITTORIA");
     document.body.classList.add("is-finished");
     letterSection.setAttribute("aria-hidden", "true");
     winSection.setAttribute("aria-hidden", "false");
-    return;
   }
 }
 
@@ -169,4 +179,6 @@ function openLetter() {
 openEnvelopeButton.addEventListener("click", openLetter);
 
 order = solvedOrder();
+applyBoardGeometry();
 renderBoard();
+void initializeBoardVisuals();
