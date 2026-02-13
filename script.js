@@ -119,6 +119,15 @@ function swapPieces(firstPosition, secondPosition) {
   renderBoard();
 }
 
+function areAdjacentPositions(firstPosition, secondPosition) {
+  const firstRow = Math.floor(firstPosition / GRID_COLUMNS);
+  const firstCol = firstPosition % GRID_COLUMNS;
+  const secondRow = Math.floor(secondPosition / GRID_COLUMNS);
+  const secondCol = secondPosition % GRID_COLUMNS;
+  const manhattanDistance = Math.abs(firstRow - secondRow) + Math.abs(firstCol - secondCol);
+  return manhattanDistance === 1;
+}
+
 function handleDragStart(event, positionIndex) {
   if (solved) {
     return;
@@ -138,6 +147,11 @@ function handleDrop(event, targetPosition) {
   }
 
   if (dragStartPosition === targetPosition) {
+    dragStartPosition = null;
+    return;
+  }
+
+  if (!areAdjacentPositions(dragStartPosition, targetPosition)) {
     dragStartPosition = null;
     return;
   }
