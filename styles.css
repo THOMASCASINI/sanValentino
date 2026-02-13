@@ -268,7 +268,7 @@ body.is-letter-open .letter-section {
   display: grid;
   grid-template-columns: repeat(var(--grid-columns, 4), minmax(0, 1fr));
   gap: 8px;
-  touch-action: manipulation;
+  touch-action: none;
 }
 
 .tile {
@@ -282,6 +282,9 @@ body.is-letter-open .letter-section {
   box-shadow: 0 8px 16px rgba(38, 20, 30, 0.2);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   position: relative;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .tile::after {
@@ -300,6 +303,16 @@ body.is-letter-open .letter-section {
 
 .tile.done {
   cursor: default;
+}
+
+.tile.dragging {
+  transform: scale(0.97);
+  box-shadow: 0 12px 24px rgba(38, 20, 30, 0.26);
+}
+
+.tile.drop-target {
+  outline: 3px solid rgba(125, 26, 64, 0.5);
+  outline-offset: -3px;
 }
 
 body.is-finished .letter-section {
