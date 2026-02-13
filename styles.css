@@ -271,6 +271,10 @@ body.is-letter-open .letter-section {
   touch-action: none;
 }
 
+.puzzle-board.is-animating {
+  pointer-events: none;
+}
+
 .tile {
   border: 0;
   border-radius: 12px;
@@ -285,6 +289,7 @@ body.is-letter-open .letter-section {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .tile::after {
@@ -305,14 +310,23 @@ body.is-letter-open .letter-section {
   cursor: default;
 }
 
-.tile.dragging {
-  transform: scale(0.97);
-  box-shadow: 0 12px 24px rgba(38, 20, 30, 0.26);
+.tile.selected {
+  outline: 3px solid rgba(125, 26, 64, 0.55);
+  outline-offset: -3px;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(38, 20, 30, 0.25);
 }
 
-.tile.drop-target {
-  outline: 3px solid rgba(125, 26, 64, 0.5);
-  outline-offset: -3px;
+.tile.invalid {
+  animation: tile-shake 0.22s ease;
+}
+
+@keyframes tile-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  75% { transform: translateX(-3px); }
+  100% { transform: translateX(0); }
 }
 
 body.is-finished .letter-section {

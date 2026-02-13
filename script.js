@@ -11,11 +11,10 @@ const puzzleBoard = document.getElementById("puzzleBoard");
 
 let currentImageUrl = DEFAULT_IMAGE_URL;
 let order = [];
-let dragStartPosition = null;
+let selectedPosition = null;
 let solved = false;
 let imageAspectRatio = 1;
-let activePointerId = null;
-let activeDropPosition = null;
+let isAnimating = false;
 
 function solvedOrder() {
   return Array.from({ length: TILE_COUNT }, (_, index) => index);
@@ -86,17 +85,22 @@ function renderBoard() {
     const tile = document.createElement("button");
     tile.type = "button";
     tile.className = "tile";
-    tile.draggable = false;
     tile.dataset.position = String(positionIndex);
     tile.dataset.piece = String(pieceIndex);
     tile.style.backgroundImage = `url("${currentImageUrl}")`;
     tile.style.backgroundPosition = backgroundPositionFor(pieceIndex);
 
+    if (selectedPosition === positionIndex && !solved) {
+      tile.classList.add("selected");
+    }
+
     if (solved) {
       tile.classList.add("done");
     }
 
-    tile.addEventListener("pointerdown", (event) => handlePointerDown(event, positionIndex));
+    tile.addEventListener("click", () => {
+      void handleTileSelection(positionIndex);
+    });
 
     puzzleBoard.appendChild(tile);
   });
@@ -131,130 +135,103 @@ function tileByPosition(positionIndex) {
   return puzzleBoard.querySelector(`.tile[data-position="${positionIndex}"]`);
 }
 
-function setDropTargetPosition(positionIndex) {
-  if (activeDropPosition !== null && activeDropPosition !== positionIndex) {
-    const previousDropTile = tileByPosition(activeDropPosition);
-    if (previousDropTile) {
-      previousDropTile.classList.remove("drop-target");
-    }
+function markInvalidTile(positionIndex) {
+  const tile = tileByPosition(positionIndex);
+  if (!tile) {
+    return;
   }
 
-  activeDropPosition = positionIndex;
+  tile.classList.remove("invalid");
+  void tile.offsetWidth;
+  tile.classList.add("invalid");
 
-  if (activeDropPosition !== null) {
-    const nextDropTile = tileByPosition(activeDropPosition);
-    if (nextDropTile) {
-      nextDropTile.classList.add("drop-target");
-    }
+  window.setTimeout(() => {
+    tile.classList.remove("invalid");
+  }, 240);
+}
+
+async function animateTileSwap(firstPosition, secondPosition) {
+  const firstTile = tileByPosition(firstPosition);
+  const secondTile = tileByPosition(secondPosition);
+
+  if (!firstTile || !secondTile || typeof firstTile.animate !== "function" || typeof secondTile.animate !== "function") {
+    return;
+  }
+
+  const firstRect = firstTile.getBoundingClientRect();
+  const secondRect = secondTile.getBoundingClientRect();
+  const deltaX = secondRect.left - firstRect.left;
+  const deltaY = secondRect.top - firstRect.top;
+  const duration = 230;
+  const easing = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+  const firstAnimation = firstTile.animate(
+    [
+      { transform: "translate(0px, 0px)", zIndex: "2" },
+      { transform: `translate(${deltaX}px, ${deltaY}px)`, zIndex: "2" }
+    ],
+    { duration, easing, fill: "forwards" }
+  );
+
+  const secondAnimation = secondTile.animate(
+    [
+      { transform: "translate(0px, 0px)", zIndex: "2" },
+      { transform: `translate(${-deltaX}px, ${-deltaY}px)`, zIndex: "2" }
+    ],
+    { duration, easing, fill: "forwards" }
+  );
+
+  await Promise.allSettled([firstAnimation.finished, secondAnimation.finished]);
+}
+
+async function animateAndSwap(firstPosition, secondPosition) {
+  isAnimating = true;
+  puzzleBoard.classList.add("is-animating");
+
+  try {
+    await animateTileSwap(firstPosition, secondPosition);
+    swapPieces(firstPosition, secondPosition);
+  } finally {
+    isAnimating = false;
+    puzzleBoard.classList.remove("is-animating");
   }
 }
 
-function clearActiveDragState() {
-  if (dragStartPosition !== null) {
-    const draggedTile = tileByPosition(dragStartPosition);
-    if (draggedTile) {
-      draggedTile.classList.remove("dragging");
-    }
-  }
-
-  setDropTargetPosition(null);
-  dragStartPosition = null;
-  activePointerId = null;
-
-  document.removeEventListener("pointermove", handlePointerMove);
-  document.removeEventListener("pointerup", handlePointerUp);
-  document.removeEventListener("pointercancel", handlePointerCancel);
-}
-
-function updateDropTargetFromPoint(clientX, clientY) {
-  if (dragStartPosition === null) {
-    setDropTargetPosition(null);
+async function handleTileSelection(nextPosition) {
+  if (solved || isAnimating) {
     return;
   }
 
-  const elementAtPoint = document.elementFromPoint(clientX, clientY);
-  const hoveredTile = elementAtPoint ? elementAtPoint.closest(".tile") : null;
-
-  if (!hoveredTile || !puzzleBoard.contains(hoveredTile)) {
-    setDropTargetPosition(null);
+  if (selectedPosition === null) {
+    selectedPosition = nextPosition;
+    renderBoard();
     return;
   }
 
-  const targetPosition = Number(hoveredTile.dataset.position);
-
-  if (
-    !Number.isInteger(targetPosition) ||
-    targetPosition === dragStartPosition ||
-    !areAdjacentPositions(dragStartPosition, targetPosition)
-  ) {
-    setDropTargetPosition(null);
+  if (selectedPosition === nextPosition) {
+    selectedPosition = null;
+    renderBoard();
     return;
   }
 
-  setDropTargetPosition(targetPosition);
-}
+  const firstPosition = selectedPosition;
+  selectedPosition = null;
 
-function handlePointerDown(event, positionIndex) {
-  if (solved) {
+  if (!areAdjacentPositions(firstPosition, nextPosition)) {
+    selectedPosition = nextPosition;
+    renderBoard();
+    markInvalidTile(firstPosition);
+    markInvalidTile(nextPosition);
     return;
   }
 
-  if (event.pointerType === "mouse" && event.button !== 0) {
-    return;
-  }
-
-  dragStartPosition = positionIndex;
-  activePointerId = event.pointerId;
-  setDropTargetPosition(null);
-
-  const draggedTile = tileByPosition(positionIndex);
-  if (draggedTile) {
-    draggedTile.classList.add("dragging");
-    draggedTile.setPointerCapture(event.pointerId);
-  }
-
-  document.addEventListener("pointermove", handlePointerMove);
-  document.addEventListener("pointerup", handlePointerUp);
-  document.addEventListener("pointercancel", handlePointerCancel);
-  event.preventDefault();
-}
-
-function handlePointerMove(event) {
-  if (dragStartPosition === null || event.pointerId !== activePointerId) {
-    return;
-  }
-
-  updateDropTargetFromPoint(event.clientX, event.clientY);
-  event.preventDefault();
-}
-
-function handlePointerUp(event) {
-  if (event.pointerId !== activePointerId) {
-    return;
-  }
-
-  const sourcePosition = dragStartPosition;
-  const targetPosition = activeDropPosition;
-
-  clearActiveDragState();
-
-  if (sourcePosition !== null && targetPosition !== null) {
-    swapPieces(sourcePosition, targetPosition);
-  }
-
-  event.preventDefault();
-}
-
-function handlePointerCancel(event) {
-  if (event.pointerId !== activePointerId) {
-    return;
-  }
-
-  clearActiveDragState();
+  await animateAndSwap(firstPosition, nextPosition);
 }
 
 function startNewGame() {
-  clearActiveDragState();
+  selectedPosition = null;
+  isAnimating = false;
+  puzzleBoard.classList.remove("is-animating");
   order = createShuffledOrder();
   solved = false;
   document.body.classList.remove("is-finished");
@@ -279,7 +256,39 @@ function openLetter() {
   }, 900);
 }
 
+function blockPageZoom() {
+  let lastTouchEnd = 0;
+  const preventDefault = (event) => event.preventDefault();
+
+  document.addEventListener("gesturestart", preventDefault, { passive: false });
+  document.addEventListener("gesturechange", preventDefault, { passive: false });
+  document.addEventListener("gestureend", preventDefault, { passive: false });
+
+  document.addEventListener(
+    "touchstart",
+    (event) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    },
+    { passive: false }
+  );
+}
+
 openEnvelopeButton.addEventListener("click", openLetter);
+blockPageZoom();
 
 order = solvedOrder();
 applyBoardGeometry();
